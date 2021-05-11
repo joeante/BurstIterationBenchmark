@@ -103,11 +103,12 @@ public class IterationPerformance : MonoBehaviour
         
         AssemblyReloadEvents.beforeAssemblyReload += delegate { IterationPerformance.SetTime("Timer-BeforeAssemblyReload"); };
     }
-    
+    const string kBaseScriptName = "Test_Job";
+
     [MenuItem("Iteration/TriggerChange")]
     static void Trigger()
     {
-        var changeFile = "Assets/IterationTest/Test_ForEach.cs";
+        var changeFile =$"Assets/IterationTest/Gen0/{kBaseScriptName}-0.cs";
         
         var src = File.ReadAllText(changeFile);
         File.WriteAllText(changeFile, src + " ");
@@ -121,18 +122,31 @@ public class IterationPerformance : MonoBehaviour
     [MenuItem("Iteration/Rebuild Scale Systems")]
     static void GenerateScripts()
     {
-        int count = 500;
-        var baseName = "Test_Job";
-        
-        
-        if (Directory.Exists("Assets/IterationTest/Gen"))
-            Directory.Delete("Assets/IterationTest/Gen", true);
-        Directory.CreateDirectory("Assets/IterationTest/Gen");
-        var src = File.ReadAllText($"Assets/IterationTest/{baseName}.cs");
-        for (int i = 0; i != count; i++)
+        int systemCount = 500;
+        int systemsPerAsmDef = 50;
+
+        var src = File.ReadAllText($"Assets/IterationTest/{kBaseScriptName}.cs");
+        for (int i = 0; i != 1000; i++)
         {
+            var dir = "Assets/IterationTest/Gen{i}";
+            if (Directory.Exists(dir))
+            {
+                var files = Directory.GetFiles(dir);
+
+                foreach (var file in files)
+                {
+                    if (file.Contains(".cs"))
+                        File.Delete(file);
+                }
+            }
+        }
+        
+        for (int i = 0; i != systemCount; i++)
+        {
+            int asmDefIndex = i / systemsPerAsmDef;
+            
             var unique = src.Replace("XXX", $"{i}");
-            File.WriteAllText($"Assets/IterationTest/Gen/{baseName}-{i}.cs", unique);
+            File.WriteAllText($"Assets/IterationTest/Gen{asmDefIndex}/{kBaseScriptName}-{i}.cs", unique);
         }
         
         AssetDatabase.Refresh();

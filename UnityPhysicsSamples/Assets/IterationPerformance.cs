@@ -125,22 +125,28 @@ public class IterationPerformance : MonoBehaviour
         int systemCount = 500;
         int systemsPerAsmDef = 50;
 
-        var src = File.ReadAllText($"Assets/IterationTest/{kBaseScriptName}.cs");
+        int asmDefs = systemCount / systemsPerAsmDef;
+
+        // Generate asmdefs
         for (int i = 0; i != 1000; i++)
         {
-            var dir = "Assets/IterationTest/Gen{i}";
+            var dir = $"Assets/IterationTest/Gen{i}";
             if (Directory.Exists(dir))
-            {
-                var files = Directory.GetFiles(dir);
+                Directory.Delete(dir, true);
+        }
+         
+        for (int i = 0; i != asmDefs; i++)
+        {
+            var dir = $"Assets/IterationTest/Gen{i}";
+            Directory.CreateDirectory(dir);
+            var asmdef = File.ReadAllText("Assets/IterationTest/GenXXX/GenXXX.asmdef");
 
-                foreach (var file in files)
-                {
-                    if (file.Contains(".cs"))
-                        File.Delete(file);
-                }
-            }
+            asmdef = asmdef.Replace("XXX", i.ToString());
+            File.WriteAllText($"Assets/IterationTest/Gen{i}/Gen{i}.asmdef", asmdef);
         }
         
+        // Generate systems
+        var src = File.ReadAllText($"Assets/IterationTest/GenXXX/{kBaseScriptName}.cs");
         for (int i = 0; i != systemCount; i++)
         {
             int asmDefIndex = i / systemsPerAsmDef;

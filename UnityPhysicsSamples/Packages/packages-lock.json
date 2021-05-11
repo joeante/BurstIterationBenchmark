@@ -1,13 +1,12 @@
 {
   "dependencies": {
     "com.unity.burst": {
-      "version": "1.4.1",
-      "depth": 1,
-      "source": "registry",
+      "version": "file:../../../burst/build/install/com.unity.burst",
+      "depth": 0,
+      "source": "local",
       "dependencies": {
         "com.unity.mathematics": "1.2.1"
-      },
-      "url": "https://packages.unity.com"
+      }
     },
     "com.unity.coding": {
       "version": "0.1.0-preview.17",

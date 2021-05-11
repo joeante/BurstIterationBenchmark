@@ -60,16 +60,17 @@ class MyTest : SystemBase
             IterationPerformance.SetTime("Timer-3Frame");
             ExtractAndResetCounters();
 
-            var total = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-SecondFrame");
-            var domainReload = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-DomainReload");
+            var total = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-3Frame");
+            var compile = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-BeforeAssemblyReload");
+            var domainReload = IterationPerformance.GetTime("Timer-BeforeAssemblyReload", "Timer-DomainReload");
             var onCreate= IterationPerformance.GetTime("Timer-DomainReload", "Timer-OnCreate");
             var firstFrame= IterationPerformance.GetTime("Timer-OnCreate", "Timer-0Frame");
             var secondFrame= IterationPerformance.GetTime("Timer-0Frame", "Timer-1Frame");
             var thirdFrame = IterationPerformance.GetTime("Timer-1Frame", "Timer-2Frame");
             var fourthFrame = IterationPerformance.GetTime("Timer-2Frame", "Timer-3Frame");
             
-            Debug.Log($"Total: {total} DomainReload: {domainReload} OnCreate: {onCreate} OnUpdate0 {firstFrame} OnUpdate1: {secondFrame} OnUpdate2: {thirdFrame} OnUpdate3: {fourthFrame}");
-            Debug.Log($"Frame1: {_Counters[1].Bursted} of {_Counters[1].Total}, Frame2: {_Counters[2].Bursted} of {_Counters[2].Total} Frame3: {_Counters[3].Bursted} of {_Counters[3].Total}");
+            Debug.Log($"Total: {total} Compile: {compile} DomainReload: {domainReload} OnCreate: {onCreate} OnUpdate0 {firstFrame} OnUpdate1: {secondFrame} OnUpdate2: {thirdFrame} OnUpdate3: {fourthFrame}");
+            Debug.Log($"Frame1: {_Counters[0].Bursted} of {_Counters[0].Total}, Frame1: {_Counters[1].Bursted} of {_Counters[1].Total}, Frame2: {_Counters[2].Bursted} of {_Counters[2].Total} Frame3: {_Counters[3].Bursted} of {_Counters[3].Total}");
         }
         Frame++;
     }
@@ -99,6 +100,8 @@ public class IterationPerformance : MonoBehaviour
     static void CompletedDomainReload()
     {        
         IterationPerformance.SetTime("Timer-DomainReload");
+        
+        AssemblyReloadEvents.beforeAssemblyReload += delegate { IterationPerformance.SetTime("Timer-BeforeAssemblyReload"); };
     }
     
     [MenuItem("Iteration/TriggerChange")]

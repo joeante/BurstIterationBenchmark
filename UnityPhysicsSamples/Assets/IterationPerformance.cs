@@ -78,6 +78,12 @@ class MyTest : SystemBase
 
 public class IterationPerformance : MonoBehaviour
 {
+    static int GeneratedSystemCount = 500;
+    static int GeneratedSystemsPerAsmDef = 50;
+
+    static int ChangedSystems = 500;
+    static int ChangedAsmDef = 10;
+    
     public static void SetTime(string name)
     {
         EditorPrefs.SetString(name, DateTime.Now.ToBinary().ToString());
@@ -108,10 +114,38 @@ public class IterationPerformance : MonoBehaviour
     [MenuItem("Iteration/TriggerChange")]
     static void Trigger()
     {
-        var changeFile =$"Assets/IterationTest/Gen0/{kBaseScriptName}-0.cs";
+        bool changeBurstCode = true;
+
+        for (int i = 0; i != ChangedSystems; i++)
+        {
+            int asmDef = i % ChangedAsmDef;
+            int indexInAsmDef = i / ChangedAsmDef;
+            int csIndex = indexInAsmDef + asmDef * GeneratedSystemsPerAsmDef;
+
+            var changeFile =$"Assets/IterationTest/Gen{asmDef}/{kBaseScriptName}-{csIndex}.cs";
         
-        var src = File.ReadAllText(changeFile);
-        File.WriteAllText(changeFile, src + " ");
+            var src = File.ReadAllText(changeFile);
+            if (changeBurstCode)
+            {
+                File.ReadAllText(changeFile);
+
+                var marker = "const int kExpectedVersion = ";
+                var index = src.IndexOf(marker) + marker.Length;
+                
+                var endIndex = src.IndexOf(';', index);
+                var version = int.Parse(src.Substring(index, endIndex - index));
+                version++;
+                src = src.Remove(index, endIndex - index);
+                src = src.Insert(index, version.ToString());
+            }
+            else
+            {
+                src = File.ReadAllText(changeFile);
+                src = src + " ";
+            }
+
+            File.WriteAllText(changeFile, src);
+        }
 
         IterationPerformance.SetTime("Timer-TriggerBegin");
 
@@ -122,10 +156,7 @@ public class IterationPerformance : MonoBehaviour
     [MenuItem("Iteration/Rebuild Scale Systems")]
     static void GenerateScripts()
     {
-        int systemCount = 500;
-        int systemsPerAsmDef = 50;
-
-        int asmDefs = systemCount / systemsPerAsmDef;
+        int asmDefs = GeneratedSystemCount / GeneratedSystemsPerAsmDef;
 
         // Generate asmdefs
         for (int i = 0; i != 1000; i++)
@@ -147,9 +178,9 @@ public class IterationPerformance : MonoBehaviour
         
         // Generate systems
         var src = File.ReadAllText($"Assets/IterationTest/GenXXX/{kBaseScriptName}.cs");
-        for (int i = 0; i != systemCount; i++)
+        for (int i = 0; i != GeneratedSystemCount; i++)
         {
-            int asmDefIndex = i / systemsPerAsmDef;
+            int asmDefIndex = i / GeneratedSystemsPerAsmDef;
             
             var unique = src.Replace("XXX", $"{i}");
             File.WriteAllText($"Assets/IterationTest/Gen{asmDefIndex}/{kBaseScriptName}-{i}.cs", unique);

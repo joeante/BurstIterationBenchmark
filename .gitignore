@@ -3,6 +3,7 @@ UnityPhysicsSamples/Library*
 UnityPhysicsSamples/.idea*
 UnityPhysicsSamples/Logs/*
 UnityPhysicsSamples/Assets/IterationTest/Gen/*
+UnityPhysicsSamples/obj/*
 *csproj*
 *sln*
 UnityPhysicsSamples/Assets/IterationTest/Gen0*

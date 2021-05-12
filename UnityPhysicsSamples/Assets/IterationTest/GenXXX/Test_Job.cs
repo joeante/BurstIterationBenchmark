@@ -8,7 +8,6 @@ using Unity.Transforms;
 
 namespace Test_Job
 {
-    
     struct TestData_XXX : IComponentData
     {
         public float3 pos;
@@ -17,6 +16,8 @@ namespace Test_Job
 
     public class TestSystem_XXX : SystemBase
     {
+        const int kExpectedVersion = 1;
+        
         private BuildPhysicsWorld physics;
 
         private EntityQuery _Query;
@@ -27,15 +28,19 @@ namespace Test_Job
             public ComponentTypeHandle<TestData_XXX> TestData;
             public CollisionWorld QueryWorld;
             public bool DidCheck;
+            public int Version;
 
             public void Execute(ArchetypeChunk batchInChunk, int batchIndex)
             {
+                if (Version != kExpectedVersion)
+                    UnityEngine.Debug.LogError("Compiled version doesn't match");
+
                 Counters.Bump(ref DidCheck);
                 
                 var arr = batchInChunk.GetNativeArray(TestData);
                 var ptr = (TestData_XXX*)arr.GetUnsafePtr();
-
-                for (int i = 0; i != arr.Length; i++)
+                
+                for (int i = 0 ; i < arr.Length; i++)
                 {
                     ref var data = ref ptr[i];
 
@@ -61,9 +66,8 @@ namespace Test_Job
         {
             var query = physics.PhysicsWorld.CollisionWorld;
 
-            var job = new TestJob {QueryWorld = query, TestData = GetComponentTypeHandle<TestData_XXX>()};
+            var job = new TestJob {QueryWorld = query, TestData = GetComponentTypeHandle<TestData_XXX>(), Version = kExpectedVersion };
             job.Run(_Query);
         }
     }
 }
-          

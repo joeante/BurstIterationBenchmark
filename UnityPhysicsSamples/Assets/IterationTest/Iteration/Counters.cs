@@ -23,11 +23,8 @@ public static class Counters
         _Counters.Data.NotBurst++;
     }
 
-    public static void Bump(ref bool didRun)
+    public static void Bump()
     {
-        if (didRun)
-            return;
-        didRun = true;
         BumpBursted();
         _Counters.Data.Total++;
     }

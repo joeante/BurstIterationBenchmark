@@ -27,7 +27,6 @@ namespace Test_Job
         {
             public ComponentTypeHandle<TestData_XXX> TestData;
             public CollisionWorld QueryWorld;
-            public bool DidCheck;
             public int Version;
 
             public void Execute(ArchetypeChunk batchInChunk, int batchIndex)
@@ -35,7 +34,7 @@ namespace Test_Job
                 if (Version != kExpectedVersion)
                     UnityEngine.Debug.LogError("Compiled version doesn't match");
 
-                Counters.Bump(ref DidCheck);
+                Counters.Bump();
                 
                 var arr = batchInChunk.GetNativeArray(TestData);
                 var ptr = (TestData_XXX*)arr.GetUnsafePtr();

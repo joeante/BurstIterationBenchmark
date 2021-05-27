@@ -14,6 +14,7 @@ namespace Test_ForEach
     public class TestSystem_XXX : SystemBase
     {
         private BuildPhysicsWorld physics;
+        const int kExpectedVersion = 1;
 
         protected override void OnCreate()
         {
@@ -32,7 +33,7 @@ namespace Test_ForEach
             {
                 var res = query.CheckSphere(data.pos, 100, CollisionFilter.Default);
                 if (res)
-                    data.output++;
+                    data.output += kExpectedVersion;
             
             }).Run();
         }

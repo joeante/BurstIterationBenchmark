@@ -4,18 +4,32 @@ using System.IO;
 using Unity.Entities;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
+class BootStrap : ICustomBootstrap
+{
+    public bool Initialize(string defaultWorldName)
+    {
+        IterationPerformance.SetTime("Timer-WorldInitializeBegin");
+        
+        var world = new World(defaultWorldName, WorldFlags.Game);
+        World.DefaultGameObjectInjectionWorld = world;
+
+        var systemList = DefaultWorldInitialization.GetAllSystems(WorldSystemFilterFlags.Default, false);
+        DefaultWorldInitialization.AddSystemsToRootLevelSystemGroups(world, systemList);
+
+#if !UNITY_DOTSRUNTIME
+        ScriptBehaviourUpdateOrder.AppendWorldToCurrentPlayerLoop(world);
+#endif
+
+        IterationPerformance.SetTime("Timer-WorldInitializeEnd");
+        return true;
+    }
+}
 
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 class MyTest : SystemBase
 {
-    protected override void OnCreate()
-    {
-        base.OnCreate();
-        IterationPerformance.SetTime("Timer-OnCreate");
-        Counters.Reset();
-    }
-
     struct BurstCounter
     {
         public int Bursted;
@@ -62,14 +76,14 @@ class MyTest : SystemBase
 
             var total = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-3Frame");
             var compile = IterationPerformance.GetTime("Timer-TriggerBegin", "Timer-BeforeAssemblyReload");
-            var domainReload = IterationPerformance.GetTime("Timer-BeforeAssemblyReload", "Timer-DomainReload");
-            var onCreate= IterationPerformance.GetTime("Timer-DomainReload", "Timer-OnCreate");
-            var firstFrame= IterationPerformance.GetTime("Timer-OnCreate", "Timer-0Frame");
+            var domainReload = IterationPerformance.GetTime("Timer-BeforeAssemblyReload", "Timer-WorldInitializeBegin");
+            var worldCreate= IterationPerformance.GetTime("Timer-WorldInitializeBegin", "Timer-WorldInitializeEnd");
+            var firstFrame= IterationPerformance.GetTime("Timer-WorldInitializeEnd", "Timer-0Frame");
             var secondFrame= IterationPerformance.GetTime("Timer-0Frame", "Timer-1Frame");
             var thirdFrame = IterationPerformance.GetTime("Timer-1Frame", "Timer-2Frame");
             var fourthFrame = IterationPerformance.GetTime("Timer-2Frame", "Timer-3Frame");
             
-            Debug.Log($"Total: {total} Compile: {compile} DomainReload: {domainReload} OnCreate: {onCreate} OnUpdate0 {firstFrame} OnUpdate1: {secondFrame} OnUpdate2: {thirdFrame} OnUpdate3: {fourthFrame}");
+            Debug.Log($"Total: {total} Compile: {compile} DomainReload: {domainReload} WorldCreate: {worldCreate} PrepareFrame0: {firstFrame} OnUpdate0: {secondFrame} OnUpdate1: {thirdFrame} OnUpdate2: {fourthFrame}");
             Debug.Log($"Frame1: {_Counters[0].Bursted} of {_Counters[0].Total}, Frame1: {_Counters[1].Bursted} of {_Counters[1].Total}, Frame2: {_Counters[2].Bursted} of {_Counters[2].Total} Frame3: {_Counters[3].Bursted} of {_Counters[3].Total}");
         }
         Frame++;
@@ -78,11 +92,14 @@ class MyTest : SystemBase
 
 public class IterationPerformance : MonoBehaviour
 {
-    static int GeneratedSystemCount = 500;
+    static int GeneratedSystemCount = 1000;
     static int GeneratedSystemsPerAsmDef = 50;
 
-    static int ChangedSystems = 500;
-    static int ChangedAsmDef = 10;
+    static int ChangedSystems = 1;
+    static int ChangedAsmDef = 1;
+    static bool ChangeBurstCode = true;
+    const string kBaseScriptName = "Test_Job";
+
     
     public static void SetTime(string name)
     {
@@ -109,13 +126,10 @@ public class IterationPerformance : MonoBehaviour
         
         AssemblyReloadEvents.beforeAssemblyReload += delegate { IterationPerformance.SetTime("Timer-BeforeAssemblyReload"); };
     }
-    const string kBaseScriptName = "Test_Job";
 
     [MenuItem("Iteration/TriggerChange")]
     static void Trigger()
     {
-        bool changeBurstCode = true;
-
         for (int i = 0; i != ChangedSystems; i++)
         {
             int asmDef = i % ChangedAsmDef;
@@ -125,7 +139,7 @@ public class IterationPerformance : MonoBehaviour
             var changeFile =$"Assets/IterationTest/Gen{asmDef}/{kBaseScriptName}-{csIndex}.cs";
         
             var src = File.ReadAllText(changeFile);
-            if (changeBurstCode)
+            if (ChangeBurstCode)
             {
                 File.ReadAllText(changeFile);
 

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using Unity.Entities;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
+using UnityEngine.SceneManagement;
 
 class BootStrap : ICustomBootstrap
 {
@@ -95,10 +97,10 @@ public class IterationPerformance : MonoBehaviour
     static int GeneratedSystemCount = 1000;
     static int GeneratedSystemsPerAsmDef = 50;
 
-    static int ChangedSystems = 1;
-    static int ChangedAsmDef = 1;
+    static int ChangedSystems = 2;
+    static int ChangedAsmDef = 2;
     static bool ChangeBurstCode = true;
-    const string kBaseScriptName = "Test_Job";
+    const string kBaseScriptName = "Test_ISystemBase";
 
     
     public static void SetTime(string name)
@@ -199,7 +201,21 @@ public class IterationPerformance : MonoBehaviour
             var unique = src.Replace("XXX", $"{i}");
             File.WriteAllText($"Assets/IterationTest/Gen{asmDefIndex}/{kBaseScriptName}-{i}.cs", unique);
         }
-        
+
         AssetDatabase.Refresh();
     }
+/*
+    [MenuItem("Iteration/Rebuild Scale Scene")]
+
+    static void GenerateScene()
+    {
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
+        SceneManager.SetActiveScene(scene);
+
+        for (int i = 0; i != GeneratedSystemCount; i++)
+        {
+            AssetDatabase.FindAssets("Script", "")  
+        }
+    }
+*/
 }

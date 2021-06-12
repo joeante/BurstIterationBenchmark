@@ -23,7 +23,7 @@ namespace Test_ISystemBase
     [BurstCompile]
     public struct TestISystem_XXX : ISystemBase
     {
-        const int kExpectedVersion = 3;
+        const int kExpectedVersion = 5;
         private EntityQuery _Query;
         private ComponentTypeHandle<TestData_XXX> _typeHandle;
         
@@ -31,9 +31,7 @@ namespace Test_ISystemBase
         {
             public ComponentTypeHandle<TestData_XXX> TestData;
             
-            #if USE_PHYSICS_QUERY
             public CollisionWorld QueryWorld;
-            #endif
             public int Version;
 
             public void Execute(ArchetypeChunk batchInChunk, int batchIndex)
@@ -49,10 +47,11 @@ namespace Test_ISystemBase
                 for (int i = 0 ; i < arr.Length; i++)
                 {
                     ref var data = ref ptr[i];
-#if USE_PHYSICS_QUERY
-                    var res = QueryWorld.CheckSphere(data.pos, 100, CollisionFilter.Default);
+                    var res = false;
+                    if (data.output == -1)
+                        res = QueryWorld.CheckSphere(data.pos, 100, CollisionFilter.Default);
+                    
                     if (res)
-#endif
                         data.output++;
                 }
             }
@@ -92,9 +91,6 @@ namespace Test_ISystemBase
             
             var job = new TestJob
             {
-                #if USE_PHYSICS_QUERY
-                QueryWorld = physics.PhysicsWorld.CollisionWorld, 
-                #endif    
                 TestData = _typeHandle, 
                 Version = kExpectedVersion
             };
